@@ -1,8 +1,8 @@
 #ifndef MYSOCKET_H_
 #define MYSOCKET_H_
+#include <netinet/in.h>
 #include <sys/socket.h>
 #include <sys/types.h>
-#include <netinet/in.h>
 
 // socket基类
 class mySocket
