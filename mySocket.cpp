@@ -20,6 +20,11 @@ bool mySocket::init_socket()
     return true;
 }
 
+int mySocket::get_sockfd() const
+{
+    return sock_fd;
+}
+
 char *mySocket::get_err_msg()
 {
     return err_msg;

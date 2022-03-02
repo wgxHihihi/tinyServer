@@ -15,6 +15,7 @@ public:
     mySocket();
     ~mySocket();
     bool init_socket();
+    int get_sockfd() const;
     char *get_err_msg();
 };
 //服务器socket
