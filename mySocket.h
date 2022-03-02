@@ -3,7 +3,6 @@
 #include <netinet/in.h>
 #include <sys/socket.h>
 #include <sys/types.h>
-
 // socket基类
 class mySocket
 {
@@ -34,10 +33,10 @@ public:
     void server_close();
 };
 //客户端socket
-class myclientSocket : public mySocket
+class myClientSocket : public mySocket
 {
 public:
-    bool client_connect(const int *ip, unsigned port);
+    bool client_connect(const char *ip, unsigned port);
     bool recv_data(char *buffer, int buffer_len, int &rec_len);
     bool send_data(const char *data, int len);
     void client_close();

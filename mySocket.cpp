@@ -3,6 +3,8 @@
 #include <errno.h>
 #include <string.h>
 #include <fcntl.h>
+#include <unistd.h>
+#include <arpa/inet.h>
 
 /*Definitions of the members of class MySocket*/
 mySocket::mySocket() {}
@@ -82,13 +84,83 @@ bool myServerSocket::accept_client(int &client_sock)
     client_fd = client_sock; //确认accept成功后再赋值
     return true;
 }
-/*need to do*/
-bool recv_data(char *buffer, int buffer_len, int &rec_len);
-bool send_data(const char *data, int len);
-void close_client(int client_sock);
-void server_close();
 
-bool client_connect(const int *ip, unsigned port);
-bool recv_data(char *buffer, int buffer_len, int &rec_len);
-bool send_data(const char *data, int len);
-void client_close();
+bool myServerSocket::recv_data(char *buffer, int buffer_len, int &rev_len)
+{
+    memset(buffer, 0, buffer_len);
+    rev_len = recv(client_fd, buffer, buffer_len, 0);
+    if (rev_len <= 0)
+    {
+        snprintf(err_msg, sizeof(err_msg), "recv data error: %s(errno: %d)", strerror(errno), errno);
+        return false;
+    }
+    printf("server recv: %s", buffer);
+    return true;
+}
+
+bool myServerSocket::send_data(const char *data, int len)
+{
+    if (send(client_fd, data, len, 0) == -1)
+    {
+        snprintf(err_msg, sizeof(err_msg), "send data error: %s(errno: %d)", strerror(errno), errno);
+        return false;
+    }
+    return true;
+}
+void myServerSocket::close_client(int client_sock)
+{
+    close(client_sock);
+}
+
+void myServerSocket::server_close()
+{
+    close(sock_fd);
+}
+/*Definitions of the members of class MycCientSocket*/
+bool myClientSocket::client_connect(const char *ip, unsigned port)
+{
+    memset(&server_addr, 0, sizeof(server_addr)); //清空目标地址变量
+    server_addr.sin_family = AF_INET;
+    server_addr.sin_port = port;
+    //将字符数组ip地址转换为二进制网络地址
+    if (inet_pton(AF_INET, ip, &server_addr.sin_addr) <= 0)
+    {
+        snprintf(err_msg, sizeof(err_msg), "inet_pton error for %s\n", ip);
+        return false;
+    }
+    /***********客户端发起连接*********/
+    if (connect(sock_fd, (const sockaddr *)&server_addr, sizeof(server_addr)) < 0)
+    { // l连接成功返回0
+        snprintf(err_msg, sizeof(err_msg), "connect error: %s(errno: %d)\n", strerror(errno), errno);
+        return false;
+    }
+    return true;
+}
+
+bool myClientSocket::recv_data(char *buffer, int buffer_len, int &rec_len)
+{
+    memset(buffer, 0, buffer_len);
+    if ((rec_len = recv(sock_fd, buffer, buffer_len, 0)) == -1)
+    {
+        snprintf(err_msg, sizeof(err_msg), "recv data error: %s(errno: %d)", strerror(errno), errno);
+        return false;
+    }
+    buffer[buffer_len] = '\0';
+    printf("client recv:%s\n", buffer);
+    return true;
+}
+
+bool myClientSocket::send_data(const char *data, int len)
+{
+    if (send(sock_fd, data, len, 0) < 0)
+    {
+        snprintf(err_msg, sizeof(err_msg), "send data error: %s(errno: %d)", strerror(errno), errno);
+        return false;
+    }
+    return true;
+}
+
+void myClientSocket::client_close()
+{
+    close(sock_fd);
+}
