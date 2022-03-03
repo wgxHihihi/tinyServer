@@ -28,8 +28,15 @@ void epoll_add(int epfd, int fd, bool is_oneshot)
     setnonblocking(fd);
 }
 
-void epoll_mod(int epfd, int fd, bool flag) {}
-void epoll_del(int epfd, int fd, bool flag) {}
+void epoll_mod(int epfd, int fd, epoll_event ev)
+{
+    epoll_ctl(epfd, EPOLL_CTL_MOD, fd, &ev);
+}
+
+void epoll_del(int epfd, int fd)
+{
+    epoll_ctl(epfd, EPOLL_CTL_DEL, fd, 0);
+}
 
 int my_epoll_wait(int epoll_fd, struct epoll_event *events, int max_events, int timeout)
 {
