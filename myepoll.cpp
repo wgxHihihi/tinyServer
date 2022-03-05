@@ -28,9 +28,12 @@ void epoll_add(int epfd, int fd, bool is_oneshot)
     setnonblocking(fd);
 }
 
-void epoll_mod(int epfd, int fd, epoll_event ev)
+void epoll_mod(int epfd, int fd, int ev)
 {
-    epoll_ctl(epfd, EPOLL_CTL_MOD, fd, &ev);
+    epoll_event event;
+    event.data.fd = fd;
+    event.events = ev | EPOLLET | EPOLLONESHOT | EPOLLRDHUP;
+    epoll_ctl(epfd, EPOLL_CTL_MOD, fd, &event);
 }
 
 void epoll_del(int epfd, int fd)

@@ -1,16 +1,28 @@
 #ifndef _MYHTTP_H_
 #define _MYHTTP_H_
 #include "myepoll.h"
+#include <string>
+#include <map>
 #define BUFFER_SIZE 1000
+#define READ_BUF_SIZE 2000
+
 class myhttp
 {
 private:
     int m_flag; //动态请求标志，true表示是动态请求
     char post_buf[BUFFER_SIZE];
+    char read_buf[READ_BUF_SIZE];
     char req_head_buf[BUFFER_SIZE];
     char body[BUFFER_SIZE];
-    char filename[250]; //静态请求文件目录
-    int filesize;       //待传输文件的字节数
+    char _filename[256]; //静态请求文件目录
+    int filesize;        //待传输文件的字节数
+    /********请求数据格式******/
+    std::string _method;                         //请求方法
+    std::string _url;                            //请求路径
+    std::string _protocol;                       // HTTP协议
+    std::string _argv;                           //消息体
+    std::string _host;                           //主机位置
+    std::map<std::string, std::string> _headers; //其他头部信息
 
 public:
     enum HTTP_CODE
@@ -41,8 +53,14 @@ public:
     void init(int ep_fd, int client_fd);
     bool myread();
     bool mywrite();
-    void doit();
+    void response();
     void close_connect();
+    bool get_line(int &start_index, int &len); //获取一行HTTP请求，插入\0截断read_buf
+    HTTP_CODE req_parse(char *l_line);         //解析请求行
+    HTTP_CODE head_parse(char *l_line);        //解析头部
+    HTTP_CODE exe_get();                       //处理get请求
+    HTTP_CODE exe_post();                      //处理post请求
+    HTTP_CODE parse();                         //解析HTTP请求并返回HTTP请求类型；
 };
 
 #endif

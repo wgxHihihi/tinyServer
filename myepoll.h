@@ -10,8 +10,9 @@ const int MAXEVENT = 1000;
 const int LISTENQ = 5;
 int epoll_init();
 int setnonblocking(int fd);
-void epoll_add(int epfd, int fd, bool flag);
-void epoll_mod(int epfd, int fd, epoll_event ev);
+void epoll_add(int epfd, int fd, bool is_oneshot);
+void epoll_mod(int epfd, int fd, int ev);
 void epoll_del(int epfd, int fd);
 int my_epoll_wait(int epoll_fd, struct epoll_event *events, int max_events, int timeout);
+
 #endif
