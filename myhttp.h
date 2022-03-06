@@ -53,14 +53,39 @@ public:
     void init(int ep_fd, int client_fd);
     bool myread();
     bool mywrite();
-    void response();
+
     void close_connect();
-    bool get_line(int &start_index, int &len); //获取一行HTTP请求，插入\0截断read_buf
-    HTTP_CODE req_parse(char *l_line);         //解析请求行
-    HTTP_CODE head_parse(char *l_line);        //解析头部
-    HTTP_CODE exe_get();                       //处理get请求
-    HTTP_CODE exe_post();                      //处理post请求
-    HTTP_CODE parse();                         //解析HTTP请求并返回HTTP请求类型；
+    //获取一行HTTP请求，插入\0截断read_buf
+    bool get_line(int &start_index, int &len);
+    //解析请求行
+    HTTP_CODE req_parse(char *l_line);
+    //解析头部
+    HTTP_CODE head_parse(char *l_line);
+    //处理get请求
+    HTTP_CODE exe_get();
+    //处理post请求
+    HTTP_CODE exe_post();
+    //解析HTTP请求并返回HTTP请求类型；
+    HTTP_CODE parse();
+
+    /****响应程序****/
+    /*写入回复数据，由mywrite传输*/
+
+    /*400错误*/
+    void bad_response();
+    /*404错误*/
+    void notfound_response();
+    /*403错误*/
+    void forbidden_response();
+    /*get返回访问文件*/
+    void file_response();
+    /*post用子进程去执行post请求*/
+    void post_response();
+    /*动态页面，post用动态页面返回结果*/
+    void dynamic_response();
+
+    /****执行响应****/
+    void response();
 };
 
 #endif

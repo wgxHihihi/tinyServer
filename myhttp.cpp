@@ -5,6 +5,7 @@
 #include <sys/sendfile.h>
 #include <iostream>
 #include <sys/stat.h>
+#include <sys/wait.h>
 
 myhttp::myhttp()
 {
@@ -153,7 +154,7 @@ myhttp::HTTP_CODE myhttp::head_parse(char *l_line)
 
 myhttp::HTTP_CODE myhttp::exe_get() //处理get请求
 {
-    char path[] = "/home/gx/vsc_project/tinyServer/";
+    char path[] = "/home/gx/vsc_project/tinyServer";
     int index = 0;
     if ((index = _url.find("?")) != std::string::npos) //动态响应
     {
@@ -174,12 +175,28 @@ myhttp::HTTP_CODE myhttp::exe_get() //处理get请求
             return BAD_REQUESTION;
 
         filesize = file_state.st_size;
+
         return FILE_REQUESTION;
     }
 }
 
 myhttp::HTTP_CODE myhttp::exe_post() //处理post请求
 {
+    char path[] = "/home/gx/vsc_project/tinyServer";
+    strcpy(_filename, path);
+    strcat(_filename, _url.c_str());
+
+    if (_headers.count("Content-Length"))
+    {
+        int argv_len = stoi(_headers["Content-Length"]);
+        _argv = post_buf + (strlen(post_buf) - argv_len);
+        if (_filename[0] != '\0' && !_argv.empty())
+            return POST_FILE;
+        else
+            return BAD_REQUESTION;
+    }
+    else
+        return BAD_REQUESTION;
 }
 
 myhttp::HTTP_CODE myhttp::parse()
@@ -224,6 +241,83 @@ myhttp::HTTP_CODE myhttp::parse()
     }
     return NO_REQUESTION;
 }
+
+void myhttp::bad_response()
+{
+    /*400 response */
+    _url = "bad_response.html";
+    bzero(_filename, sizeof(_filename));
+    sprintf(_filename, "/home/gx/vsc_project/tinyServer/%s", _url.c_str());
+    struct stat my_file;
+    if (stat(_filename, &my_file) < 0)
+        std::cout << "bad_response.html not found !";
+    filesize = my_file.st_size;
+    bzero(req_head_buf, sizeof(req_head_buf));
+    sprintf(req_head_buf, "HTTP/1.1 400 BAD_REQUESTION\r\nConnection: close\r\ncontent-length:%d\r\n\r\n", filesize);
+}
+
+void myhttp::forbidden_response()
+{
+    _url = "forbidden_response.html";
+    bzero(_filename, sizeof(_filename));
+    sprintf(_filename, "/home/gx/vsc_project/tinyServer/%s", _url.c_str());
+    struct stat my_file;
+    if (stat(_filename, &my_file) < 0)
+        std::cout << "forbidden_response.html not found !";
+    filesize = my_file.st_size;
+    bzero(req_head_buf, sizeof(req_head_buf));
+    sprintf(req_head_buf, "HTTP/1.1 403 FORBIDDEN\r\nConnection: close\r\ncontent-length:%d\r\n\r\n", filesize);
+}
+
+void myhttp::notfound_response()
+{
+    _url = "notfound_response.html";
+    bzero(_filename, sizeof(_filename));
+    sprintf(_filename, "/home/gx/vsc_project/tinyServer/%s", _url.c_str());
+    struct stat my_file;
+    if (stat(_filename, &my_file) < 0)
+        std::cout << "notfound_response.html not found !";
+    filesize = my_file.st_size;
+    bzero(req_head_buf, sizeof(req_head_buf));
+    sprintf(req_head_buf, "HTTP/1.1 404 NOT_FOUND\r\nConnection: close\r\ncontent-length:%d\r\n\r\n", filesize);
+}
+
+void myhttp::file_response()
+{
+    m_flag = true;
+    bzero(req_head_buf, sizeof(req_head_buf));
+    sprintf(req_head_buf, "HTTP/1.1 200 ok\r\nConnection: close\r\ncontent-length:%d\r\n\r\n", filesize);
+}
+
+void myhttp::post_response()
+{
+    if (fork() == 0)
+    {
+        dup2(clientfd, STDOUT_FILENO);
+        execl(_filename, _argv.c_str(), NULL);
+    }
+    wait(NULL);
+}
+
+void myhttp::dynamic_response()
+{
+    m_flag = true;
+    int num[2];
+    bzero(req_head_buf, sizeof(req_head_buf));
+    sscanf(_argv.c_str(), "a=%d&b=%d", &num[0], &num[1]);
+    if (strcmp(_filename, "/add") == 0)
+    {
+        sprintf(body, "<html><body>\r\n<p>%d + %d = %d </p><hr>\r\n</body></html>\r\n", num[0], num[1], num[0] + num[1]);
+        sprintf(req_head_buf, "HTTP/1.1 200 ok\r\nConnection: close\r\ncontent-length: %zd\r\n\r\n", strlen(body));
+    }
+    else if (strcmp(_filename, "/multiplication") == 0)
+    {
+        std::cout << "\t\t\t\tmultiplication\n\n";
+        sprintf(body, "<html><body>\r\n<p>%d * %d = %d </p><hr>\r\n</body></html>\r\n", num[0], num[1], num[0] * num[1]);
+        sprintf(req_head_buf, "HTTP/1.1 200 ok\r\nConnection: close\r\ncontent-length: %zd\r\n\r\n", strlen(body));
+    }
+}
+
 /*
 NO_REQUESTION,        //请求不完整，需要客户继续输入
 GET_REQUESTION,       //获得并且解析了一个正确的HTTP请求
@@ -246,31 +340,33 @@ void myhttp::response() //应答请求
         break;
     case BAD_REQUESTION: // 400
         std::cout << "bad requestion\n";
-        // do something
+        bad_response();
+        epoll_mod(epfd, clientfd, EPOLLOUT);
         break;
     case FORBIDDEN_REQUESTION: // 403
         std::cout << "forbiddenr requestion\n";
-        // dosomething
+        forbidden_response();
+        epoll_mod(epfd, clientfd, EPOLLOUT);
         break;
     case NOT_FOUND: // 404
         std::cout << "not found\n";
-        // dosomething
+        notfound_response();
+        epoll_mod(epfd, clientfd, EPOLLOUT);
         break;
     case FILE_REQUESTION:
         std::cout << "file requestion\n";
-        // dosomething
+        file_response();
+        epoll_mod(epfd, clientfd, EPOLLOUT);
         break;
     case DYNAMIC_FILE:
-        std::cout << "fynamic file\n";
-        // dosomething
+        std::cout << "dynamic file\n";
+        dynamic_response();
+        epoll_mod(epfd, clientfd, EPOLLOUT);
         break;
     case POST_FILE:
         std::cout << "post requestion\n";
-        // dosomething
-        break;
-    case GET_REQUESTION:
-        std::cout << "get requestion\n";
-        // dosomething
+        post_response();
+        epoll_mod(epfd, clientfd, EPOLLOUT);
         break;
     default:
         close_connect();
