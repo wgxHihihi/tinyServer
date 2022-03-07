@@ -2,10 +2,10 @@
 
 /*创建线程池*/
 template <class T>
-threadpool<T>::threadpool(int max_th /*= 8*/, int max_j /*= 1000*/)
+threadpool<T>::threadpool()
 {
-    max_thread = max_th;
-    max_job = max_j;
+    max_thread = 8;
+    max_job = 1000;
     m_stop = false;
     m_threadpool = new pthread_t[max_thread]; //可换成智能指针
     if (!m_threadpool)
@@ -20,7 +20,7 @@ threadpool<T>::threadpool(int max_th /*= 8*/, int max_j /*= 1000*/)
             delete[] m_threadpool;
             throw std::exception();
         }
-        if (pthread_detach(m_threadpool + i)) //将状态改为unjoinable状态，确保资源的释放
+        if (pthread_detach(m_threadpool[i])) //将状态改为unjoinable状态，确保资源的释放
         {
             delete[] m_threadpool;
             throw std::exception();
@@ -78,6 +78,6 @@ void threadpool<T>::run()
         {
             continue;
         }
-        request->doit();
+        request->response();
     }
 }

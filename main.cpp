@@ -4,6 +4,7 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include "threadpool.h"
+#include "threadpool.cpp"
 #include "myepoll.h"
 #include "myhttp.h"
 
@@ -57,8 +58,9 @@ int acceptConnect(int listenfd)
 
 int main()
 {
-    threadpool<myhttp> *pool = new threadpool<myhttp>;
+    threadpool<myhttp> *pool = nullptr;
     // http服务
+    pool = new threadpool<myhttp>;
     myhttp *users = new myhttp[100];
     assert(users);
     //创建监听socket
@@ -85,7 +87,7 @@ int main()
                 int client_fd = acceptConnect(listenfd);
                 assert(client_fd > -1);
                 epoll_add(epfd, client_fd, true);
-                std::cout << "client_fd:" << client_fd << "****\n";
+                std::cout << "****client_fd:" << client_fd << "****\n";
                 users[client_fd].init(epfd, client_fd);
             }
             else if (events[i].events & EPOLLIN)

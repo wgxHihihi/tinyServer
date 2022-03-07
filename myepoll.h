@@ -4,7 +4,6 @@
 #include <sys/epoll.h>
 #include <sys/socket.h>
 #include <fcntl.h>
-#include "threadpool.h"
 
 const int MAXEVENT = 1000;
 const int LISTENQ = 5;

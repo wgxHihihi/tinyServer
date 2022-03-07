@@ -5,6 +5,7 @@
 #include <map>
 #define BUFFER_SIZE 1000
 #define READ_BUF_SIZE 2000
+#define PATH "/home/gx/vsc_project/tinyServer/page"
 
 class myhttp
 {

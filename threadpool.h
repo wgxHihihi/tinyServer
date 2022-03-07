@@ -19,7 +19,7 @@ private:
     sem m_queueState;      //是否有任务需要处理的信号量
     bool m_stop;           //是否结束线程
 public:
-    threadpool(int max_th = 8, int max_j = 10);
+    threadpool();
     ~threadpool();
     bool addjob(T *request);
 

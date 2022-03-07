@@ -154,22 +154,25 @@ myhttp::HTTP_CODE myhttp::head_parse(char *l_line)
 
 myhttp::HTTP_CODE myhttp::exe_get() //处理get请求
 {
-    char path[] = "/home/gx/vsc_project/tinyServer";
+    char path[] = PATH;
     int index = 0;
+    std::cout << _url << std::endl;
     if ((index = _url.find("?")) != std::string::npos) //动态响应
     {
         _argv = _url.substr(index + 1);
-        strcpy(_filename, _url.substr(0, index + 1).c_str());
+        strcpy(_filename, _url.substr(0, index).c_str());
         return DYNAMIC_FILE;
     }
     else
     {
         strcpy(_filename, path);
+        if (_url == "/")
+            _url = "/sum.html";
         strcat(_filename, _url.c_str());
         struct stat file_state;
         if (stat(_filename, &file_state) < 0)
             return NOT_FOUND;
-        if (file_state.st_mode & S_IROTH)
+        if (!(file_state.st_mode & S_IROTH))
             return FORBIDDEN_REQUESTION;
         if (S_ISDIR(file_state.st_mode)) // is dir?
             return BAD_REQUESTION;
@@ -182,7 +185,7 @@ myhttp::HTTP_CODE myhttp::exe_get() //处理get请求
 
 myhttp::HTTP_CODE myhttp::exe_post() //处理post请求
 {
-    char path[] = "/home/gx/vsc_project/tinyServer";
+    char path[] = PATH;
     strcpy(_filename, path);
     strcat(_filename, _url.c_str());
 
@@ -245,9 +248,10 @@ myhttp::HTTP_CODE myhttp::parse()
 void myhttp::bad_response()
 {
     /*400 response */
-    _url = "bad_response.html";
+    _url = "/bad.html";
     bzero(_filename, sizeof(_filename));
-    sprintf(_filename, "/home/gx/vsc_project/tinyServer/%s", _url.c_str());
+    strcpy(_filename, PATH);
+    strcat(_filename, _url.c_str());
     struct stat my_file;
     if (stat(_filename, &my_file) < 0)
         std::cout << "bad_response.html not found !";
@@ -258,9 +262,10 @@ void myhttp::bad_response()
 
 void myhttp::forbidden_response()
 {
-    _url = "forbidden_response.html";
+    _url = "/forbidden.html";
     bzero(_filename, sizeof(_filename));
-    sprintf(_filename, "/home/gx/vsc_project/tinyServer/%s", _url.c_str());
+    strcpy(_filename, PATH);
+    strcat(_filename, _url.c_str());
     struct stat my_file;
     if (stat(_filename, &my_file) < 0)
         std::cout << "forbidden_response.html not found !";
@@ -271,9 +276,10 @@ void myhttp::forbidden_response()
 
 void myhttp::notfound_response()
 {
-    _url = "notfound_response.html";
+    _url = "/not_found.html";
     bzero(_filename, sizeof(_filename));
-    sprintf(_filename, "/home/gx/vsc_project/tinyServer/%s", _url.c_str());
+    strcpy(_filename, PATH);
+    strcat(_filename, _url.c_str());
     struct stat my_file;
     if (stat(_filename, &my_file) < 0)
         std::cout << "notfound_response.html not found !";
@@ -284,7 +290,7 @@ void myhttp::notfound_response()
 
 void myhttp::file_response()
 {
-    m_flag = true;
+    m_flag = false;
     bzero(req_head_buf, sizeof(req_head_buf));
     sprintf(req_head_buf, "HTTP/1.1 200 ok\r\nConnection: close\r\ncontent-length:%d\r\n\r\n", filesize);
 }
@@ -303,11 +309,16 @@ void myhttp::dynamic_response()
 {
     m_flag = true;
     int num[2];
+    int res = 0;
     bzero(req_head_buf, sizeof(req_head_buf));
     sscanf(_argv.c_str(), "a=%d&b=%d", &num[0], &num[1]);
+    std::cout << num[0] << ", " << num[1] << std::endl;
+    std::cout << _filename << std::endl;
     if (strcmp(_filename, "/add") == 0)
     {
-        sprintf(body, "<html><body>\r\n<p>%d + %d = %d </p><hr>\r\n</body></html>\r\n", num[0], num[1], num[0] + num[1]);
+        res = num[0] + num[1];
+
+        sprintf(body, "<html><body>\r\n<p>%d + %d = %d </p><hr>\r\n</body></html>\r\n", num[0], num[1], res);
         sprintf(req_head_buf, "HTTP/1.1 200 ok\r\nConnection: close\r\ncontent-length: %zd\r\n\r\n", strlen(body));
     }
     else if (strcmp(_filename, "/multiplication") == 0)

@@ -1,0 +1,3 @@
+/home/gx/vsc_project/tinyServer/build/CMakeFiles/rebuild_cache.dir
+/home/gx/vsc_project/tinyServer/build/CMakeFiles/TinyServer.dir
+/home/gx/vsc_project/tinyServer/build/CMakeFiles/edit_cache.dir

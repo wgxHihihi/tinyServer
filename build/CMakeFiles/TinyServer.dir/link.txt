@@ -1,0 +1,1 @@
+g++   -std=c++11 -march=native -O3 -pthread -g  -rdynamic CMakeFiles/TinyServer.dir/main.cpp.o CMakeFiles/TinyServer.dir/myepoll.cpp.o CMakeFiles/TinyServer.dir/myhttp.cpp.o CMakeFiles/TinyServer.dir/mylock.cpp.o CMakeFiles/TinyServer.dir/threadpool.cpp.o  -o TinyServer 
